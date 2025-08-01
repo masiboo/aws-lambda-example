@@ -1,14 +1,15 @@
 #!/usr/bin/env node
 import * as cdk from 'aws-cdk-lib';
-import { DatabaseStack } from '../lib/database-stack';
 import { EcsStack } from '../lib/ecs-stack';
+import { RdsStack } from '../lib/rds-stack';
+import * as fs from 'fs';
 
 const app = new cdk.App();
+const rdsStack = new RdsStack(app, 'RdsStack');
+const ecsStack = new EcsStack(app, 'EcsStack');
 
-const databaseStack = new DatabaseStack(app, 'DatabaseStack');
+const rdsSynth = app.synth().getStackArtifact(rdsStack.artifactId).template;
+const ecsSynth = app.synth().getStackArtifact(ecsStack.artifactId).template;
 
-new EcsStack(app, 'EcsStack', {
-    vpc: databaseStack.vpc,
-    dbCluster: databaseStack.dbCluster,
-    dbSecret: databaseStack.dbSecret,
-});
+fs.writeFileSync('rds-stack.json', JSON.stringify(rdsSynth, null, 2));
+fs.writeFileSync('ecs-stack.json', JSON.stringify(ecsSynth, null, 2));
